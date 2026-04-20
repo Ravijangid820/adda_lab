@@ -38,19 +38,25 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh '"$MAVEN_HOME/bin/mvn" -B clean package'
+                dir('demo') {
+                    sh '"$MAVEN_HOME/bin/mvn" -B clean package'
+                }
             }
         }
 
         stage('Test Results') {
             steps {
-                junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                dir('demo') {
+                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                }
             }
         }
 
         stage('Archive') {
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                dir('demo') {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
             }
         }
     }
