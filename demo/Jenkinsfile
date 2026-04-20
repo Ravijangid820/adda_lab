@@ -3,6 +3,7 @@ pipeline {
 
     options {
         timestamps()
+        skipDefaultCheckout(true)
     }
 
     stages {
@@ -12,9 +13,32 @@ pipeline {
             }
         }
 
+        stage('Setup Maven') {
+            steps {
+                sh '''
+                    set -eu
+                    MAVEN_VERSION=3.9.9
+                    MAVEN_DIR="$WORKSPACE/.maven/apache-maven-$MAVEN_VERSION"
+
+                    if [ ! -x "$MAVEN_DIR/bin/mvn" ]; then
+                        mkdir -p "$WORKSPACE/.maven"
+                        if command -v curl >/dev/null 2>&1; then
+                            curl -fsSL "https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" -o "$WORKSPACE/.maven/maven.tgz"
+                        else
+                            wget -q "https://archive.apache.org/dist/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz" -O "$WORKSPACE/.maven/maven.tgz"
+                        fi
+                        tar -xzf "$WORKSPACE/.maven/maven.tgz" -C "$WORKSPACE/.maven"
+                    fi
+                '''
+                script {
+                    env.MAVEN_HOME = "${env.WORKSPACE}/.maven/apache-maven-3.9.9"
+                }
+            }
+        }
+
         stage('Build') {
             steps {
-                sh 'mvn -B clean package'
+                sh '"$MAVEN_HOME/bin/mvn" -B clean package'
             }
         }
 
